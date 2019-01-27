@@ -6,6 +6,8 @@
 
 typedef std::map <std::string, SgFunctionDeclaration*> mapType;
 typedef std::pair<std::string, SgFunctionDeclaration*> mapPair;
+                // artless give it two files, c decl in one map, f decl in another
+
 
 class InterfaceChecker
 {
@@ -17,7 +19,7 @@ class InterfaceChecker
       SgType* c_base_type = NULL;
       bool isDefaultKind = false;
       std::string kind_name = "";
-      
+
       SgVarRefExp* kind_exp = isSgVarRefExp(kind_type);
       if (kind_exp == NULL) {
          isDefaultKind = true;
@@ -152,7 +154,7 @@ class InterfaceChecker
 
       return c_type;
    }
-   
+
    bool compare_types(SgInitializedName* f_name, SgInitializedName* c_name)
    {
       SgType* c_type = c_name->get_type();
@@ -183,7 +185,7 @@ class InterfaceChecker
 
       return false;
    }
-   
+
    bool compare_decl(SgFunctionDeclaration* f_func_dec, SgFunctionDeclaration* c_func_dec)
    {
       // check for number of arguments
@@ -240,13 +242,13 @@ class InterfaceChecker
          std::cout << "map_f: size " << map_f.size() << ", map_c: size " << map_c.size() << std::endl;
          return false;
       }
-      
+
       mapType::iterator itr;
       for (itr = map_f.begin(); itr != map_f.end(); ++itr) {
          std::string bind_func_name = itr->second->get_binding_label();
          std::string c_func_name;
          mapType::iterator got_it = map_c.find(bind_func_name);
-         
+
 
          if (got_it != map_c.end()) {
             c_func_name = got_it->first;
@@ -270,7 +272,7 @@ class InterfaceChecker
 };
 
 
-// Inherited attribute (see ROSE Tutorial (Chapter 9)).
+// Inherited attribute (see ROSE Tutorial (Chapter 9)).   //goes down traversal?
 class InheritedAttribute
 {
   public:
@@ -282,7 +284,7 @@ InheritedAttribute::InheritedAttribute()
 {
 }
 
-// Synthesized attribute (see ROSE Tutorial (Chapter 9)).
+// Synthesized attribute (see ROSE Tutorial (Chapter 9)).    //goes up the traversal // in classes you can stuff member variables
 class SynthesizedAttribute
 {
   public:
@@ -294,7 +296,7 @@ SynthesizedAttribute::SynthesizedAttribute()
 {
 }
 
-class Traversal : public SgTopDownBottomUpProcessing<InheritedAttribute,SynthesizedAttribute>
+class Traversal : public SgTopDownBottomUpProcessing<InheritedAttribute,SynthesizedAttribute> //inherited vs synthesized?
 {
   public:
 
@@ -328,9 +330,9 @@ Traversal::evaluateInheritedAttribute (SgNode* astNode, InheritedAttribute inher
          if (functionDeclaration != NULL) {
             std::string func_name = functionDeclaration->get_name().getString();
             map_c_or_cxx.insert(mapPair(func_name, functionDeclaration));
-            
+
             SgInitializedNamePtrList & name_list = functionDeclaration->get_args();
-      
+
             BOOST_FOREACH(SgInitializedName* name, name_list)
             {
                std::cout << "\t   get_args() = " << name->get_type()->class_name() << " " <<name->get_name() << std::endl;
@@ -355,7 +357,7 @@ Traversal::evaluateInheritedAttribute (SgNode* astNode, InheritedAttribute inher
             map_f.insert(mapPair(func_name, functionDeclaration));
 
             SgInitializedNamePtrList & name_list = functionDeclaration->get_args();
-      
+
             BOOST_FOREACH(SgInitializedName* name, name_list)
             {
                std::cout << "\t   getargs() = " << name->get_type()->class_name() << " " <<name->get_name() << std::endl;
@@ -391,40 +393,44 @@ Traversal::evaluateSynthesizedAttribute (SgNode* astNode, InheritedAttribute inh
    }
 
 
-Traversal::Traversal()
+Traversal::Traversal()   // artless:: is this a definition for artless  LOOK AT f18!!
    {
    }
 
 
 int
 main ( int argc, char* argv[] )
-   {
+{
+
+
   // Build the abstract syntax tree
-     SgProject* project = frontend(argc,argv);
-     ROSE_ASSERT (project != NULL);
+  SgProject* project = frontend(argc,argv);
+  ROSE_ASSERT (project != NULL);
+  AstTests::runAllTests(project);
 
   // Build the inherited attribute
-     InheritedAttribute inheritedAttribute;
+  InheritedAttribute inheritedAttribute;
 
   // Define the traversal
-     Traversal astTraversal;
+  Traversal astTraversal;
 
   // Call the traversal starting at the project (root) node of the AST
-     astTraversal.traverseInputFiles(project,inheritedAttribute);
+  astTraversal.traverseInputFiles(project,inheritedAttribute);
 
-     std::cout << "\n" << std::endl;
+  // std::cout << "\n" << std::endl;
 
-     mapType map_f = astTraversal.getFortranMap();
-     mapType map_c_or_cxx = astTraversal.getCMap();
+  // mapType map_f = astTraversal.getFortranMap();
+  // mapType map_c_or_cxx = astTraversal.getCMap();
 
-     InterfaceChecker check;
-     if (check.check_interface(map_f, map_c_or_cxx)) {
-        std::cout << "END OF PROGRAM: map's functions match" << std::endl;
-     }
-     else {
-        std::cout << "END OF PROGRAM: map's functions do not match" << std::endl;
-     }
+  // InterfaceChecker check;
+  // if (check.check_interface(map_f, map_c_or_cxx)) {
+  //   std::cout << "END OF PROGRAM: map's functions match" << std::endl;
+  // }
+  // else {
+  //   std::cout << "END OF PROGRAM: map's functions do not match" << std::endl;
+  // }
 
-  // return 0;
-     return backendCompilesUsingOriginalInputFile(project);
-   }
+  std::cout << "Fin" << std::endl;
+  return 0;
+  // return backendCompilesUsingOriginalInputFile(project);
+}
